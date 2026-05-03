@@ -1,59 +1,79 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# MediConnect Group
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+=======================================
++ **Supervisor**: LÊ THANH NHÂN
++ **Semester**: 1
++ **Batch No**: T3.2511.MO
++ **Group No**: 3
++ **List Of Member**:
+1. THÁI PHÁT (Student1693582) - Team Leader
+2. LA VĨ QUYỀN (Student1693584)
+3. TRƯƠNG KIM NGÂN (Student1690424)
+4. HUỲNH ANH (Student1693580)
+5. TRẦN GIÀU (Student1700913)
 
-## About Laravel
+=======================================
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Tính năng chính
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Đối với Bệnh nhân:
+- Đăng ký, đăng nhập và quản lý hồ sơ cá nhân (Avatar, thông tin liên lạc).
+- Tìm kiếm bác sĩ theo Chuyên khoa và Thành phố.
+- Xem lịch trống, đặt lịch hẹn trực tuyến và quản lý lịch sử khám.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Đối với Bác sĩ:
+- Tự chủ quản lý lịch làm việc và các ca trống (time slots).
+- Dashboard quản lý, xác nhận hoặc hủy danh sách bệnh nhân đặt lịch.
 
-## Learning Laravel
+### Đối với Quản trị viên (Admin):
+- Quản lý danh mục chuyên khoa, thành phố và tài khoản người dùng.
+- Quản lý bài viết tin tức và kiến thức phòng bệnh y tế.
+- Xem báo cáo thống kê hoạt động của hệ thống.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Công nghệ sử dụng
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Backend**: PHP 8.2+, Laravel Framework 11.x.
+- **Frontend**: Blade Template, Bootstrap 5.3, Vite.
+- **Database**: MySQL 8.0 / SQLite.
+- **Tools**: Composer, NPM, Git, VS Code.
 
-## Laravel Sponsors
+## Cấu trúc dự án
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- `/Source Code`: Toàn bộ mã nguồn ứng dụng Laravel.
+- `/Documentations`: Tài liệu đặc tả (CRS), thiết kế (DFD, ERD) và hướng dẫn.
 
-### Premium Partners
+## Hướng dẫn cài đặt và Khởi chạy (Local)
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Thực hiện các bước sau để chạy dự án trên máy cục bộ (sử dụng XAMPP hoặc môi trường tương đương):
 
-## Contributing
+1. **Tải mã nguồn**:
+   ```bash
+   git clone [https://github.com/thaiphatcaifa/eProjectSem01.git](https://github.com/thaiphatcaifa/eProjectSem01.git)
+   cd "eProjectSem01/Source Code"
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+2. **Cài đặt các thư viện phụ thuộc**:
+   ```bash
+   composer install
+   npm install && npm run build
+   ```
 
-## Code of Conduct
+3. **Thiết lập cấu hình**:
+   - Sao chép file mẫu: `cp .env.example .env`
+   - Tạo mã bảo mật: `php artisan key:generate`
+   - Cấu hình Database trong file `.env` (DB_DATABASE, DB_USERNAME, DB_PASSWORD).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+4. **Khởi tạo dữ liệu**:
+   ```bash
+   php artisan migrate --seed
+   ```
 
-## Security Vulnerabilities
+5. **Khởi chạy ứng dụng**:
+   ```bash
+   php artisan serve
+   ```
+   Sau đó truy cập: `http://127.0.0.1:8000`
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+=======================================
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+**Thank you for visiting our project!**
