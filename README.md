@@ -22,4 +22,4 @@
 
 =======================================
 
-**Thank you for visit our website.**
+**Thank you for visiting our website.**
