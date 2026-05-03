@@ -3,7 +3,7 @@
 =======================================
 + **Supervisor**: LÊ THANH NHÂN
 + **Semester**: 1
-+ **Batch No**: T3.2511.MO
++ **Batch No**: T3.2511.M0
 + **Group No**: 3
 + **List Of Member**:
 1. THÁI PHÁT (Student1693582) - Team Leader
