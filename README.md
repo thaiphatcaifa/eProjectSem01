@@ -14,7 +14,7 @@
      
 =======================================
 
-**Documentations**: [View Documents](https://github.com/thaiphatcaifa/eProjectSem01/tree/main/Source%20Code)
+**Documentations**: https://github.com/thaiphatcaifa/eProjectSem01/tree/main/Documentations
 
 =======================================
 
