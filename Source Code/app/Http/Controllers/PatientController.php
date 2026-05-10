@@ -55,6 +55,13 @@ class PatientController extends Controller {
                 $schedule = DoctorSchedule::lockForUpdate()->findOrFail($request->schedule_id);
                 if ($schedule->is_booked) throw new \Exception("This schedule is already booked!");
 
+                // Logic chặn đặt lịch nếu đã quá hạn (Expired)
+                $timeString = trim(explode('-', $schedule->time_slot)[0]);
+                $scheduleTime = Carbon::parse($schedule->date . ' ' . $timeString, 'Asia/Ho_Chi_Minh');
+                if ($scheduleTime->isPast()) {
+                    throw new \Exception("This schedule has expired and cannot be booked.");
+                }
+
                 $schedule->is_booked = true; 
                 $schedule->save();
 
@@ -87,9 +94,12 @@ class PatientController extends Controller {
         }
         
         if ($appointment->status == 'Confirmed') {
-            $scheduleDate = Carbon::parse($appointment->schedule->date . ' ' . explode('-', $appointment->schedule->time_slot)[0]);
-            $now = Carbon::now();
+            // Set rõ timezone Việt Nam để so sánh chính xác tuyệt đối
+            $timeString = trim(explode('-', $appointment->schedule->time_slot)[0]);
+            $scheduleDate = Carbon::parse($appointment->schedule->date . ' ' . $timeString, 'Asia/Ho_Chi_Minh');
+            $now = Carbon::now('Asia/Ho_Chi_Minh');
             
+            // diffInHours sẽ trả về số âm nếu $scheduleDate ở trong quá khứ
             if ($now->diffInHours($scheduleDate, false) < 24) {
                  return back()->with('error', 'You can only cancel confirmed appointments at least 24 hours in advance.');
             }

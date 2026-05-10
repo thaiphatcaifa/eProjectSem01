@@ -1,5 +1,8 @@
 @extends('layouts.app')
 @section('content')
+@php
+    use Carbon\Carbon;
+@endphp
 <div class="container">
     <div class="d-flex align-items-center mb-4">
         <i class="bi bi-speedometer2 text-primary-dark fs-2 me-3"></i>
@@ -118,6 +121,21 @@
                         </thead>
                         <tbody>
                             @foreach($schedules as $s)
+                            @php
+                                $timeStartRaw = trim(explode('-', $s->time_slot)[0]);
+                                
+                                // Xử lý lỗi nếu giờ là hệ 24h (>=13) nhưng lại thừa chữ AM/PM
+                                if (preg_match('/(AM|PM)/i', $timeStartRaw) && (int)substr($timeStartRaw, 0, 2) >= 13) {
+                                    $timeStartRaw = trim(str_ireplace(['AM', 'PM'], '', $timeStartRaw));
+                                }
+                                
+                                try {
+                                    $isExpired = \Carbon\Carbon::parse($s->date . ' ' . $timeStartRaw, 'Asia/Ho_Chi_Minh')->isPast();
+                                } catch (\Exception $e) {
+                                    // Bỏ qua lỗi parse nếu định dạng quá dị
+                                    $isExpired = false;
+                                }
+                            @endphp
                             <tr>
                                 <td class="ps-4">{{ date('d/m/Y', strtotime($s->date)) }}</td>
                                 <td>{{ $s->time_slot }}</td>
@@ -125,12 +143,14 @@
                                 <td>
                                     @if($s->is_booked) 
                                         <span class="badge bg-danger rounded-pill px-3 py-2">Booked</span>
+                                    @elseif($isExpired)
+                                        <span class="badge bg-secondary rounded-pill px-3 py-2">Expired</span>
                                     @else 
                                         <span class="badge bg-success rounded-pill px-3 py-2">Available</span> 
                                     @endif
                                 </td>
                                 <td class="text-end pe-4">
-                                    @if(!$s->is_booked)
+                                    @if(!$s->is_booked && !$isExpired)
                                         <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editScheduleModal{{ $s->id }}">
                                             <i class="bi bi-pencil"></i>
                                         </button>

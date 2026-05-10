@@ -1,3 +1,7 @@
+@php
+    use Carbon\Carbon;
+@endphp
+
 @forelse($doctors as $doctor)
 <div class="col-md-6 col-lg-4">
     <div class="card h-100 border-0 shadow-sm hover-shadow transition">
@@ -22,9 +26,27 @@
                 <select name="schedule_id" class="form-select mb-3 shadow-sm" required>
                     <option value="">-- Available Slots --</option>
                     @foreach($doctor->schedules as $schedule)
-                        <option value="{{ $schedule->id }}">
+                        @php
+                            // Lấy chuỗi giờ bắt đầu
+                            $timeStartRaw = trim(explode('-', $schedule->time_slot)[0]);
+                            
+                            // Xử lý logic an toàn cho Carbon: Nếu giờ >= 13 mà có AM/PM thì xóa AM/PM
+                            if (preg_match('/(AM|PM)/i', $timeStartRaw) && (int)substr($timeStartRaw, 0, 2) >= 13) {
+                                $timeStartRaw = trim(str_ireplace(['AM', 'PM'], '', $timeStartRaw));
+                            }
+                            
+                            try {
+                                $isExpired = Carbon::parse($schedule->date . ' ' . $timeStartRaw, 'Asia/Ho_Chi_Minh')->isPast();
+                            } catch (\Exception $e) {
+                                // Nếu định dạng không thể parse, mặc định coi như chưa hết hạn để không lỗi giao diện
+                                $isExpired = false;
+                            }
+                        @endphp
+                        
+                        <option value="{{ $schedule->id }}" {{ $isExpired ? 'disabled' : '' }}>
                             {{ date('M d, Y', strtotime($schedule->date)) }} ({{ $schedule->time_slot }}) 
                             - {{ number_format($schedule->price ?? $doctor->consultation_fee) }} VND
+                            {{ $isExpired ? ' (Expired)' : '' }}
                         </option>
                     @endforeach
                 </select>
