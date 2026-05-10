@@ -9,6 +9,7 @@ use App\Models\DoctorSchedule;
 use App\Models\Appointment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class PatientController extends Controller {
     public function index(Request $request) {
@@ -28,8 +29,23 @@ class PatientController extends Controller {
                 $q->where('city_id', $request->city_id);
             });
         }
+        
+        // Hỗ trợ tìm kiếm theo tên (AJAX)
+        if ($request->filled('search')) {
+            $query->whereHas('user', function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%');
+            });
+        }
 
         $doctors = $query->get();
+        
+        // Trả về JSON nếu là request AJAX
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('patient.partials.doctor_list', compact('doctors'))->render()
+            ]);
+        }
+
         return view('patient.index', compact('doctors', 'specialties', 'cities'));
     }
 
@@ -46,10 +62,11 @@ class PatientController extends Controller {
                     'patient_id' => Auth::id(),
                     'doctor_id' => $request->doctor_id,
                     'schedule_id' => $schedule->id,
-                    'status' => 'Confirmed'
+                    'status' => 'Pending' // Trạng thái ban đầu là Pending chờ bác sĩ xác nhận
                 ]);
             });
-            return back()->with('success', 'Appointment booked successfully! The doctor has been notified.');
+            // Chuyển hướng ngay đến lịch hẹn
+            return redirect()->route('patient.appointments')->with('success', 'Appointment booked successfully! Please wait for the doctor\'s confirmation.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -63,8 +80,20 @@ class PatientController extends Controller {
     }
 
     public function cancel($id) {
-        $appointment = Appointment::where('id', $id)->where('patient_id', Auth::id())->firstOrFail();
-        if($appointment->status == 'Cancelled') return back()->with('error', 'Appointment is already cancelled.');
+        $appointment = Appointment::where('id', $id)->where('patient_id', Auth::id())->with('schedule')->firstOrFail();
+        
+        if($appointment->status == 'Cancelled') {
+            return back()->with('error', 'Appointment is already cancelled.');
+        }
+        
+        if ($appointment->status == 'Confirmed') {
+            $scheduleDate = Carbon::parse($appointment->schedule->date . ' ' . explode('-', $appointment->schedule->time_slot)[0]);
+            $now = Carbon::now();
+            
+            if ($now->diffInHours($scheduleDate, false) < 24) {
+                 return back()->with('error', 'You can only cancel confirmed appointments at least 24 hours in advance.');
+            }
+        }
         
         $appointment->status = 'Cancelled';
         $appointment->save();

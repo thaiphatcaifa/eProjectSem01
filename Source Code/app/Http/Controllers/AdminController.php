@@ -7,18 +7,43 @@ use App\Models\City;
 use App\Models\Article;
 use App\Models\User;
 use App\Models\Doctor;
+use App\Models\Appointment;
+use Carbon\Carbon;
 
 class AdminController extends Controller
 {
-    public function dashboard()
+    public function dashboard(Request $request)
     {
+        // 1. XỬ LÝ LỌC THỐNG KÊ THEO THỜI GIAN (Ngày bắt đầu - Ngày kết thúc)
+        $query = Appointment::query();
+        
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $startDate = Carbon::parse($request->start_date)->startOfDay();
+            $endDate = Carbon::parse($request->end_date)->endOfDay();
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        // 2. CÁC CON SỐ THỐNG KÊ CÓ Ý NGHĨA
+        $totalAppointments = $query->count();
+        $completedAppointments = (clone $query)->where('status', 'Completed')->count();
+        $cancelledAppointments = (clone $query)->where('status', 'Cancelled')->count();
+        $pendingAppointments = (clone $query)->where('status', 'Pending')->count();
+        
+        $totalPatients = User::where('role', 'patient')->count();
+        $totalDoctors = Doctor::count();
+
+        // 3. LẤY DỮ LIỆU CHO CÁC TAB QUẢN LÝ (Giữ nguyên logic cũ của nhóm)
         $cities = City::all();
         $articles = Article::latest()->get();
         // Fetch all users including patients and doctors for management
         $users = User::all(); 
         $doctors = Doctor::with('user', 'specialty')->get();
 
-        return view('admin.dashboard', compact('cities', 'articles', 'users', 'doctors'));
+        return view('admin.dashboard', compact(
+            'cities', 'articles', 'users', 'doctors',
+            'totalAppointments', 'completedAppointments', 'cancelledAppointments', 'pendingAppointments',
+            'totalPatients', 'totalDoctors'
+        ));
     }
 
     // --- City Management ---

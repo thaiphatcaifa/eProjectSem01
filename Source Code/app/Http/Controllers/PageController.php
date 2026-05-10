@@ -34,8 +34,12 @@ class PageController extends Controller
         $request->validate([
             'name' => 'required|string',
             'email' => 'required|email',
-            'phone' => 'required|string',
+            // Bắt buộc nhập, tối đa 15 ký tự, và chỉ chứa các chữ số từ 0-9
+            'phone' => 'required|string|max:15|regex:/^[0-9]+$/',
             'message' => 'required|string',
+        ], [
+            'phone.max' => 'The phone number may not be greater than 15 characters.',
+            'phone.regex' => 'The phone number must contain only numbers.'
         ]);
 
         // Process message (e.g., save to DB or send email)
