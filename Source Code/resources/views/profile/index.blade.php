@@ -48,7 +48,7 @@
                         @csrf
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label fw-bold small">Full Name</label>
+                                <label class="form-label fw-bold small">Full Name <span class="text-danger">*</span></label>
                                 <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" 
                                        value="{{ old('name', Auth::user()->name) }}" required>
                                 @error('name')
@@ -57,7 +57,7 @@
                             </div>
                             
                             <div class="col-md-6">
-                                <label class="form-label fw-bold small">Email Address</label>
+                                <label class="form-label fw-bold small">Email Address <span class="text-danger">*</span></label>
                                 <input type="email" class="form-control bg-light" value="{{ Auth::user()->email }}" readonly>
                                 <div class="form-text">Email cannot be changed for security.</div>
                             </div>

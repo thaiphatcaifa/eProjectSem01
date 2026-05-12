@@ -82,7 +82,6 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Specialty added successfully!');
     }
 
-    // BỔ SUNG HÀM XÓA CHUYÊN KHOA VỚI LOGIC KIỂM TRA AN TOÀN
     public function destroySpecialty($id)
     {
         $specialty = Specialty::findOrFail($id);
@@ -116,12 +115,21 @@ class AdminController extends Controller
     }
 
     // --- Quản lý User & Trạng thái ---
+    
+    /**
+     * NÂNG CẤP: Đổi trạng thái hoạt động của User dựa trên cột is_active
+     */
     public function toggleUserStatus($id)
     {
         $user = User::findOrFail($id);
-        $user->role = ($user->role === 'deactivated') ? 'patient' : 'deactivated';
+        
+        // Đảo ngược trạng thái hoạt động (true -> false, false -> true)
+        $user->is_active = !$user->is_active;
         $user->save();
-        return redirect()->back()->with('success', 'User account status updated!');
+        
+        // Tùy chỉnh câu thông báo
+        $statusMsg = $user->is_active ? 'activated' : 'deactivated';
+        return redirect()->back()->with('success', 'User account has been ' . $statusMsg . '!');
     }
 
     /**

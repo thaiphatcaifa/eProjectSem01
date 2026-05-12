@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException; // Bổ sung thư viện để hiển thị lỗi
 
 class LoginController extends Controller
 {
@@ -20,6 +22,17 @@ class LoginController extends Controller
      */
     protected function authenticated(Request $request, $user)
     {
+        // 1. Kiểm tra nếu tài khoản đang bị vô hiệu hóa (Deactivated)
+        if (!$user->is_active) {
+            Auth::logout(); // Hủy phiên đăng nhập ngay lập tức
+            
+            // Trả về giao diện Login kèm thông báo lỗi màu đỏ ở ô Email
+            throw ValidationException::withMessages([
+                $this->username() => ['Your account has been deactivated. Please contact the administration.'],
+            ]);
+        }
+
+        // 2. Chuyển hướng người dùng dựa trên vai trò (Nếu tài khoản đang hoạt động)
         // Kiểm tra quyền Admin (hỗ trợ cả giá trị số 3, 0 hoặc chuỗi 'admin')
         if ($user->role == 3 || $user->role == 0 || $user->role === 'admin') {
             return redirect()->route('admin.dashboard');

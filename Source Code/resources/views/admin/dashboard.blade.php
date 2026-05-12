@@ -206,7 +206,7 @@
                 </div>
                 <div class="card-body p-4 table-responsive">
                     <table class="table table-hover align-middle">
-                        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>Name</th><th>Email</th><th>Role & Status</th><th>Actions</th></tr></thead>
                         <tbody>
                             @foreach($users as $user)
                             <tr>
@@ -218,22 +218,28 @@
                                 </td>
                                 <td>{{ $user->email }}</td>
                                 <td>
-                                    <span class="badge {{ $user->role == 'admin' ? 'bg-danger' : ($user->role == 'doctor' || $user->role == 2 ? 'bg-success' : 'bg-primary') }}">
+                                    {{-- Hiển thị Badge cho Role --}}
+                                    <span class="badge {{ in_array($user->role, ['admin', 3, 0]) ? 'bg-danger' : ($user->role == 'doctor' || $user->role == 2 ? 'bg-success' : 'bg-primary') }}">
                                         @if($user->role == 'doctor' || $user->role == 2) Doctor 
-                                        @elseif($user->role == 'admin') Admin 
+                                        @elseif(in_array($user->role, ['admin', 3, 0])) Admin 
                                         @else Patient @endif
                                     </span>
+                                    {{-- Hiển thị Badge cho Status --}}
+                                    @if(!$user->is_active)
+                                        <span class="badge bg-secondary ms-1">Deactivated</span>
+                                    @endif
                                 </td>
                                 <td>
-                                    @if($user->is_requesting_doctor && ($user->role == 'patient' || $user->role == 1))
+                                    {{-- Chỉ cho duyệt nâng cấp nếu tài khoản đang hoạt động --}}
+                                    @if($user->is_requesting_doctor && ($user->role == 'patient' || $user->role == 1) && $user->is_active)
                                         <button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#upgradeModal{{ $user->id }}">
                                             <i class="bi bi-person-badge"></i> Approve Doctor
                                         </button>
-                                    @elseif($user->role != 'admin')
-                                        <form action="{{ route('admin.users.toggle', $user->id) }}" method="POST">
+                                    @elseif(!in_array($user->role, ['admin', 3, 0]))
+                                        <form action="{{ route('admin.users.toggle', $user->id) }}" method="POST" class="d-inline">
                                             @csrf
-                                            <button class="btn btn-sm shadow-sm {{ $user->role == 'deactivated' ? 'btn-success' : 'btn-warning' }}">
-                                                {{ $user->role == 'deactivated' ? 'Activate' : 'Deactivate' }}
+                                            <button class="btn btn-sm shadow-sm {{ !$user->is_active ? 'btn-success' : 'btn-warning' }}">
+                                                {{ !$user->is_active ? 'Activate' : 'Deactivate' }}
                                             </button>
                                         </form>
                                     @endif
@@ -346,7 +352,7 @@
 </div>
 
 @foreach($users as $user)
-    @if($user->is_requesting_doctor && ($user->role == 'patient' || $user->role == 1))
+    @if($user->is_requesting_doctor && ($user->role == 'patient' || $user->role == 1) && $user->is_active)
         <div class="modal fade" id="upgradeModal{{ $user->id }}" tabindex="-1" aria-labelledby="upgradeModalLabel{{ $user->id }}" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content border-0 shadow">
