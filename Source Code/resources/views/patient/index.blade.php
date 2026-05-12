@@ -49,32 +49,69 @@
         const specialtySelect = document.getElementById('specialty_id');
         const doctorsContainer = document.getElementById('doctors-container');
 
-        // Hàm gọi API lấy danh sách
+        let timeoutId;
+        let abortController;
+        let isInteracting = false;
+
+        // 1. FIX GIẬT LAG DROPDOWN: Tạm dừng auto-refresh khi người dùng rê chuột hoặc tương tác với danh sách
+        doctorsContainer.addEventListener('mouseenter', () => isInteracting = true);
+        doctorsContainer.addEventListener('mouseleave', () => isInteracting = false);
+        doctorsContainer.addEventListener('focusin', () => isInteracting = true);
+        doctorsContainer.addEventListener('focusout', () => isInteracting = false);
+
         function fetchDoctors() {
+            // 2. FIX RACE CONDITION: Hủy request cũ đang bay trên mạng nếu có request mới phát sinh
+            if (abortController) {
+                abortController.abort();
+            }
+            abortController = new AbortController();
+
             const search = searchName.value;
             const city = citySelect.value;
             const specialty = specialtySelect.value;
 
-            // Truyền params lên backend
             const url = `{{ route('patient.index') }}?search=${encodeURIComponent(search)}&city_id=${encodeURIComponent(city)}&specialty_id=${encodeURIComponent(specialty)}`;
 
             fetch(url, {
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest' // Khai báo đây là request AJAX
-                }
+                    'X-Requested-With': 'XMLHttpRequest' 
+                },
+                signal: abortController.signal
             })
-            .then(response => response.text()) // FIX LỖI: Đổi từ json() sang text() vì backend đang trả về chuỗi HTML
+            .then(response => {
+                if (!response.ok) throw new Error('Lỗi kết nối');
+                return response.text(); // 3. FIX LỖI KHÔNG HIỆN BÁC SĨ: Đổi json() thành text()
+            })
             .then(html => {
-                // FIX LỖI: Gán trực tiếp chuỗi HTML nhận được vào giao diện
-                doctorsContainer.innerHTML = html;
+                doctorsContainer.innerHTML = html; // Render HTML thẳng vào vùng chứa
             })
-            .catch(error => console.error('Error fetching doctors:', error));
+            .catch(error => {
+                // Chỉ văng log lỗi nếu lỗi đó KHÔNG PHẢI là do chúng ta chủ động hủy (AbortError)
+                if (error.name !== 'AbortError') {
+                    console.error('Error fetching doctors:', error);
+                }
+            });
         }
 
-        // Kích hoạt tìm kiếm tự động khi người dùng thao tác
-        searchName.addEventListener('keyup', fetchDoctors);
+        // 4. KỸ THUẬT DEBOUNCE: Chờ người dùng ngừng gõ phím 500ms thì mới gửi truy vấn
+        function debouncedFetch() {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                fetchDoctors();
+            }, 500);
+        }
+
+        // Lắng nghe sự kiện (Dùng 'input' thay vì 'keyup' để bắt được cả hành vi bôi đen paste chuột)
+        searchName.addEventListener('input', debouncedFetch);
         citySelect.addEventListener('change', fetchDoctors);
         specialtySelect.addEventListener('change', fetchDoctors);
+
+        // Kích hoạt auto-refresh mỗi 15 giây (NHƯNG BỎ QUA nếu người dùng đang dùng chuột trên thẻ lịch)
+        setInterval(() => {
+            if (!isInteracting) {
+                fetchDoctors();
+            }
+        }, 15000);
     });
 </script>
 @endsection
