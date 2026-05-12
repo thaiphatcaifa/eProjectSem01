@@ -10,6 +10,13 @@ use Illuminate\Support\Facades\Auth;
 
 class DoctorController extends Controller {
     
+    // BỔ SUNG: Hàm khởi tạo bảo vệ Controller bằng Middleware
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('role:doctor');
+    }
+
     public function dashboard() {
         $user = Auth::user();
         $doctor = $user->doctor; 
@@ -33,37 +40,29 @@ class DoctorController extends Controller {
         }
 
         $schedules = DoctorSchedule::where('doctor_id', $doctor->id)->orderBy('date', 'desc')->get();
-        $appointments = Appointment::where('doctor_id', $doctor->id)->orderBy('created_at', 'desc')->get();
+        $appointments = Appointment::where('doctor_id', $doctor->id)->with(['patient', 'schedule'])->orderBy('created_at', 'desc')->get();
 
         return view('doctor.dashboard', compact('schedules', 'appointments'));
     }
 
     public function storeSchedule(Request $request) {
-        // Bổ sung validate cho giá tiền (price)
         $request->validate([
-            'date' => 'required|date', 
+            'date' => 'required|date',
             'time_slot' => 'required|string',
             'price' => 'required|numeric|min:0'
         ]);
-        
-        $doctor = Auth::user()->doctor;
-        
-        if(!$doctor) {
-            return back()->with('error', 'Không tìm thấy hồ sơ bác sĩ!');
-        }
 
         DoctorSchedule::create([
-            'doctor_id' => $doctor->id,
+            'doctor_id' => Auth::user()->doctor->id,
             'date' => $request->date,
             'time_slot' => $request->time_slot,
-            'price' => $request->price, // Lưu giá tiền
+            'price' => $request->price,
             'is_booked' => false
         ]);
-        
+
         return back()->with('success', 'Schedule posted successfully!');
     }
 
-    // Bổ sung hàm cập nhật lịch khám (Chỉ được sửa khi chưa có bệnh nhân book)
     public function updateSchedule(Request $request, $id) {
         $request->validate([
             'date' => 'required|date',
@@ -71,11 +70,10 @@ class DoctorController extends Controller {
             'price' => 'required|numeric|min:0'
         ]);
 
-        $doctor = Auth::user()->doctor;
-        $schedule = DoctorSchedule::where('id', $id)->where('doctor_id', $doctor->id)->firstOrFail();
-
+        $schedule = DoctorSchedule::where('id', $id)->where('doctor_id', Auth::user()->doctor->id)->firstOrFail();
+        
         if ($schedule->is_booked) {
-            return back()->with('error', 'Cannot update a schedule that is already booked by a patient.');
+            return back()->with('error', 'Cannot edit a schedule that is already booked.');
         }
 
         $schedule->update([
@@ -87,13 +85,11 @@ class DoctorController extends Controller {
         return back()->with('success', 'Schedule updated successfully!');
     }
 
-    // Bổ sung hàm xóa lịch khám (Chỉ được xóa khi chưa có bệnh nhân book)
     public function destroySchedule($id) {
-        $doctor = Auth::user()->doctor;
-        $schedule = DoctorSchedule::where('id', $id)->where('doctor_id', $doctor->id)->firstOrFail();
-
+        $schedule = DoctorSchedule::where('id', $id)->where('doctor_id', Auth::user()->doctor->id)->firstOrFail();
+        
         if ($schedule->is_booked) {
-            return back()->with('error', 'Cannot delete a schedule that is already booked by a patient.');
+            return back()->with('error', 'Cannot delete a schedule that is already booked.');
         }
 
         $schedule->delete();
@@ -115,8 +111,12 @@ class DoctorController extends Controller {
         return back()->with('success', 'Appointment confirmed successfully!');
     }
 
-    // Bổ sung hàm bác sĩ từ chối/hủy lịch hẹn
-    public function cancelAppointment($id) {
+    // CẬP NHẬT: Hàm bác sĩ từ chối/hủy lịch hẹn kèm lý do
+    public function cancelAppointment(Request $request, $id) {
+        $request->validate([
+            'cancel_reason' => 'required|string|max:500'
+        ]);
+
         $doctor = Auth::user()->doctor;
         $appointment = Appointment::where('id', $id)->where('doctor_id', $doctor->id)->firstOrFail();
 
@@ -125,6 +125,7 @@ class DoctorController extends Controller {
         }
 
         $appointment->status = 'Cancelled';
+        $appointment->cancel_reason = $request->cancel_reason; // Lưu lý do hủy
         $appointment->save();
 
         // Giải phóng lịch (Free up the schedule)
@@ -134,6 +135,6 @@ class DoctorController extends Controller {
             $schedule->save();
         }
 
-        return back()->with('success', 'Appointment cancelled and schedule has been freed up.');
+        return back()->with('success', 'Appointment cancelled with reason and schedule has been freed up.');
     }
 }

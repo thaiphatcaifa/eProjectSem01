@@ -31,7 +31,7 @@ Route::get('/sitemap', [PageController::class, 'sitemap'])->name('sitemap');
 | 2. Authentication Routes
 |--------------------------------------------------------------------------
 */
-Auth::routes(); //
+Auth::routes(); 
 Route::get('/home', function() { return redirect('/'); });
 
 /*
@@ -40,46 +40,51 @@ Route::get('/home', function() { return redirect('/'); });
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function () {
-
-    // --- Common: Profile Management (Đã điều chỉnh tách biệt Password) ---
+    
+    // --- Profile Management (Khôi phục chuẩn xác theo hàm gốc của bạn) ---
     Route::prefix('profile')->name('profile.')->group(function () {
-        // Trang quản lý thông tin cá nhân
-        Route::get('/', [HomeController::class, 'index'])->name('index');
+        Route::get('/', [HomeController::class, 'index'])->name('index'); // Fix: Trả lại hàm index()
         Route::post('/update', [HomeController::class, 'updateProfile'])->name('update');
         
-        // Trang đổi mật khẩu chuyên biệt (Tách ra theo yêu cầu giảng viên)
-        Route::get('/password', function() { return view('profile.password'); })->name('password');
+        Route::get('/password', function() { return view('profile.password'); })->name('password'); // Fix: Trả lại closure view
         Route::post('/password/update', [HomeController::class, 'updatePassword'])->name('password.update');
         
-        // Quản lý ảnh đại diện
-        Route::post('/avatar', [HomeController::class, 'uploadAvatar'])->name('avatar');
+        Route::post('/avatar', [HomeController::class, 'uploadAvatar'])->name('avatar'); // Fix: Trả lại hàm uploadAvatar()
+        
+        // Tính năng mới: Yêu cầu nâng cấp bác sĩ
+        Route::post('/request-doctor', [PatientController::class, 'requestDoctor'])->name('requestDoctor');
     });
 
-    // --- Administrator Module ---
+    // --- Admin Module ---
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
         
-        // Master Database: City Management 
+        // City Management
         Route::post('/cities', [AdminController::class, 'storeCity'])->name('cities.store');
         Route::delete('/cities/{id}', [AdminController::class, 'destroyCity'])->name('cities.destroy');
         
-        // Content Management: News, Diseases, Cures
+        // Content Management
         Route::post('/articles', [AdminController::class, 'storeArticle'])->name('articles.store');
         Route::delete('/articles/{id}', [AdminController::class, 'destroyArticle'])->name('articles.destroy');
         
-        // User & Patient Management 
+        // User & Patient Management
         Route::post('/users/{id}/toggle', [AdminController::class, 'toggleUserStatus'])->name('users.toggle');
         
         // Doctor Management
-        Route::get('/doctors', [AdminController::class, 'manageDoctors'])->name('doctors.index');
+        Route::get('/doctors', [AdminController::class, 'manageDoctors'])->name('doctors');
         Route::delete('/doctors/{id}', [AdminController::class, 'destroyDoctor'])->name('doctors.destroy');
+
+        // Specialty Management & Approval for upgrading to Doctor
+        Route::post('/specialties', [AdminController::class, 'storeSpecialty'])->name('specialties.store');
+        Route::delete('/specialties/{id}', [AdminController::class, 'destroySpecialty'])->name('specialties.destroy'); // Bổ sung route xóa chuyên khoa
+        Route::post('/users/{id}/upgrade-doctor', [AdminController::class, 'upgradeToDoctor'])->name('users.upgrade');
     });
 
     // --- Doctor Module ---
     Route::prefix('doctor')->name('doctor.')->group(function () {
         Route::get('/dashboard', [DoctorController::class, 'dashboard'])->name('dashboard');
         
-        // Availability Scheduling
+        // Manage Schedule
         Route::get('/schedule', [DoctorController::class, 'schedule'])->name('schedule');
         Route::post('/schedule', [DoctorController::class, 'storeSchedule'])->name('schedule.store');
         Route::put('/schedule/{id}', [DoctorController::class, 'updateSchedule'])->name('schedule.update');

@@ -12,6 +12,14 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class PatientController extends Controller {
+    
+    // Hàm khởi tạo bảo vệ Controller bằng Middleware
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('role:patient');
+    }
+
     public function index(Request $request) {
         $specialties = Specialty::all();
         $cities = City::all();
@@ -39,50 +47,60 @@ class PatientController extends Controller {
 
         $doctors = $query->get();
         
-        // Trả về JSON nếu là request AJAX
-        if ($request->ajax()) {
-            return response()->json([
-                'html' => view('patient.partials.doctor_list', compact('doctors'))->render()
-            ]);
+        if($request->ajax()) {
+            return view('patient.partials.doctor_list', compact('doctors'))->render();
         }
 
         return view('patient.index', compact('doctors', 'specialties', 'cities'));
     }
 
     public function book(Request $request) {
+        $request->validate([
+            'doctor_id' => 'required|exists:doctors,id',
+            'schedule_id' => 'required|exists:doctor_schedules,id'
+        ]);
+
         try {
             DB::transaction(function () use ($request) {
-                $schedule = DoctorSchedule::lockForUpdate()->findOrFail($request->schedule_id);
-                if ($schedule->is_booked) throw new \Exception("This schedule is already booked!");
+                // Sử dụng lockForUpdate() để khóa dòng dữ liệu, 
+                // ngăn chặn hoàn toàn việc 2 người cùng click trong cùng 1 mili-giây
+                $schedule = DoctorSchedule::where('id', $request->schedule_id)
+                                        ->where('doctor_id', $request->doctor_id)
+                                        ->lockForUpdate()
+                                        ->firstOrFail(); // Chỉ fail 404 nếu ID bị hack/sửa bậy
 
-                // Logic chặn đặt lịch nếu đã quá hạn (Expired)
-                $timeString = trim(explode('-', $schedule->time_slot)[0]);
-                $scheduleTime = Carbon::parse($schedule->date . ' ' . $timeString, 'Asia/Ho_Chi_Minh');
-                if ($scheduleTime->isPast()) {
-                    throw new \Exception("This schedule has expired and cannot be booked.");
+                // Nếu lịch đã bị người khác chọn trước đó, ném ra lỗi thân thiện
+                if ($schedule->is_booked) {
+                    throw new \Exception("This schedule is being confirmed");
                 }
 
-                $schedule->is_booked = true; 
-                $schedule->save();
-
+                // Tiến hành đặt lịch
                 Appointment::create([
                     'patient_id' => Auth::id(),
                     'doctor_id' => $request->doctor_id,
                     'schedule_id' => $schedule->id,
-                    'status' => 'Pending' // Trạng thái ban đầu là Pending chờ bác sĩ xác nhận
+                    'status' => 'Pending'
                 ]);
+
+                // Cập nhật trạng thái lịch thành đã đặt
+                $schedule->update(['is_booked' => true]);
             });
-            // Chuyển hướng ngay đến lịch hẹn
-            return redirect()->route('patient.appointments')->with('success', 'Appointment booked successfully! Please wait for the doctor\'s confirmation.');
+
+            return redirect()->route('patient.appointments')->with('success', 'Appointment booked successfully. Please wait for doctor confirmation.');
+            
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // Đề phòng trường hợp lịch không tồn tại trong Database
+            return back()->with('error', 'Schedule not found or invalid.');
         } catch (\Exception $e) {
+            // Bắt lỗi Exception do chúng ta ném ra ở trên và trả về cho View
             return back()->with('error', $e->getMessage());
         }
     }
 
     public function appointments() {
         $appointments = Appointment::where('patient_id', Auth::id())
-                                   ->with('doctor.user', 'schedule')
-                                   ->orderBy('created_at', 'desc')->get();
+                                ->with(['doctor.user', 'schedule'])
+                                ->orderBy('created_at', 'desc')->get();
         return view('patient.appointments', compact('appointments'));
     }
 
@@ -115,5 +133,19 @@ class PatientController extends Controller {
             $schedule->save();
         }
         return back()->with('success', 'Appointment cancelled successfully.');
+    }
+
+    // Hàm xử lý yêu cầu nâng cấp lên bác sĩ
+    public function requestDoctor() {
+        $user = Auth::user();
+        
+        // Chỉ xử lý nếu user thực sự đang là bệnh nhân
+        if ($user->role == 'patient' || $user->role == 1) {
+            $user->is_requesting_doctor = true;
+            $user->save();
+            return back()->with('success', 'Your request to become a doctor has been submitted to the Admin for approval.');
+        }
+        
+        return back()->with('error', 'Invalid request.');
     }
 }

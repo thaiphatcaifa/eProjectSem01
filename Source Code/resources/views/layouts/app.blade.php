@@ -23,6 +23,24 @@
         .navbar-brand { font-weight: 700; color: var(--primary-dark) !important; }
         .nav-link { font-weight: 500; color: #555; }
         .nav-link:hover { color: var(--primary-dark); }
+        
+        /* Hiệu ứng hover nổi lên cho các khu vực trang chủ và thẻ bác sĩ */
+        .hover-pop, .hover-shadow.transition {
+            transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+        }
+        .hover-pop:hover, .hover-shadow.transition:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.15) !important;
+        }
+
+        /* Hiệu ứng nổi lên cho các nút */
+        .btn {
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, border-color 0.3s ease !important;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>

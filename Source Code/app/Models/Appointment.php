@@ -4,7 +4,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class Appointment extends Model {
-    protected $fillable = ['patient_id', 'doctor_id', 'schedule_id', 'status'];
+    // Bổ sung 'cancel_reason' vào mảng $fillable
+    protected $fillable = ['patient_id', 'doctor_id', 'schedule_id', 'status', 'cancel_reason'];
 
     public function schedule() { 
         return $this->belongsTo(DoctorSchedule::class); 

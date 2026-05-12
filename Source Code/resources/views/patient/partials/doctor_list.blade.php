@@ -4,7 +4,7 @@
 
 @forelse($doctors as $doctor)
 <div class="col-md-6 col-lg-4">
-    <div class="card h-100 border-0 shadow-sm hover-shadow transition">
+    <div class="card h-100 border-0 shadow-sm hover-pop transition">
         <div class="card-body p-4">
             <div class="d-flex align-items-center mb-3">
                 <img src="{{ $doctor->user->avatar ? asset('uploads/avatars/'.$doctor->user->avatar) : 'https://ui-avatars.com/api/?name='.urlencode($doctor->user->name) }}" 

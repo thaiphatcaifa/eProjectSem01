@@ -1,4 +1,5 @@
 @extends('layouts.app')
+
 @section('content')
 <div class="container text-center">
     <div class="row justify-content-center">
@@ -9,22 +10,35 @@
             
             @auth
                 @if(Auth::user()->role == 'doctor' || Auth::user()->role == 2)
-                    <a href="{{ route('doctor.dashboard') }}" class="btn btn-primary-dark btn-lg px-5 py-3 shadow"><i class="bi bi-calendar-check icon-thin me-2"></i>Manage Schedules</a>
+                    <a href="{{ route('doctor.dashboard') }}" class="btn btn-primary-dark btn-lg px-5 py-3 shadow">
+                        <i class="bi bi-calendar-check icon-thin me-2"></i>Manage Schedules
+                    </a>
                 @else
-                    <a href="{{ route('patient.index') }}" class="btn btn-primary-dark btn-lg px-5 py-3 shadow"><i class="bi bi-search icon-thin me-2"></i>Find a Doctor Now</a>
+                    <a href="{{ route('patient.index') }}" class="btn btn-primary-dark btn-lg px-5 py-3 shadow">
+                        <i class="bi bi-search icon-thin me-2"></i>Find a Doctor Now
+                    </a>
                 @endif
             @else
-                <a href="{{ route('login') }}" class="btn btn-primary-dark btn-lg px-5 py-3 shadow me-2"><i class="bi bi-box-arrow-in-right icon-thin me-2"></i>Login</a>
-                <a href="{{ route('register') }}" class="btn btn-outline-secondary btn-lg px-5 py-3"><i class="bi bi-person-plus icon-thin me-2"></i>Register</a>
+                <a href="{{ route('login') }}" class="btn btn-primary-dark btn-lg px-5 py-3 shadow me-2">
+                    <i class="bi bi-box-arrow-in-right icon-thin me-2"></i>Login
+                </a>
+                <a href="{{ route('register') }}" class="btn btn-outline-secondary btn-lg px-5 py-3">
+                    <i class="bi bi-person-plus icon-thin me-2"></i>Register
+                </a>
             @endauth
 
-            <div class="card mt-5 bg-white text-start shadow-sm">
+            <div class="card mt-5 border-0 shadow-sm hover-pop text-start">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="fw-bold text-primary-dark mb-0"><i class="bi bi-diagram-3 me-2"></i>System Sitemap</h5>
+                </div>
                 <div class="card-body p-4">
-                    <h5 class="fw-bold text-primary-dark border-bottom pb-2"><i class="bi bi-diagram-3 icon-thin me-2"></i>System Sitemap</h5>
-                    <div class="row mt-3">
+                    <div class="row">
                         <div class="col-6 col-md-4">
-                            <ul class="list-unstyled">
-                                <li class="mb-2"><i class="bi bi-dot"></i><a href="{{ url('/') }}" class="text-decoration-none text-secondary">Home</a></li>
+                            <strong class="text-primary-dark">General</strong>
+                            <ul class="list-unstyled mt-2">
+                                <li class="mb-2"><i class="bi bi-dot"></i><a href="{{ route('home') }}" class="text-decoration-none text-secondary">Home</a></li>
+                                <li class="mb-2"><i class="bi bi-dot"></i><a href="{{ route('about') }}" class="text-decoration-none text-secondary">About Us</a></li>
+                                <li class="mb-2"><i class="bi bi-dot"></i><a href="{{ route('contact') }}" class="text-decoration-none text-secondary">Contact Us</a></li>
                                 <li class="mb-2"><i class="bi bi-dot"></i><a href="{{ route('login') }}" class="text-decoration-none text-secondary">Login</a></li>
                                 <li class="mb-2"><i class="bi bi-dot"></i><a href="{{ route('register') }}" class="text-decoration-none text-secondary">Register</a></li>
                             </ul>

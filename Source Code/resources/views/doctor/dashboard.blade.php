@@ -18,7 +18,7 @@
 
     <div class="row g-4">
         <div class="col-12 col-lg-4">
-            <div class="card h-100 shadow-sm border-0">
+            <div class="card h-100 shadow-sm border-0 hover-pop transition">
                 <div class="card-header bg-primary-dark text-white py-3">
                     <h5 class="mb-0 fw-bold"><i class="bi bi-plus-circle icon-thin me-2"></i>Post Availability</h5>
                 </div>
@@ -37,14 +37,14 @@
                             <label class="text-muted small fw-bold mb-1"><i class="bi bi-cash me-1"></i> Consultation Fee (VND) <span class="text-danger">*</span></label>
                             <input type="number" name="price" class="form-control" value="{{ Auth::user()->doctor->consultation_fee ?? 500000 }}" min="0" required>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 fw-bold py-2">Publish Schedule</button>
+                        <button type="submit" class="btn btn-primary-dark w-100 fw-bold py-2 shadow-sm">Publish Schedule</button>
                     </form>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-lg-8">
-            <div class="card mb-4 shadow-sm border-0">
+            <div class="card mb-4 shadow-sm border-0 hover-pop transition">
                 <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                     <h5 class="text-primary-dark mb-0 fw-bold"><i class="bi bi-calendar-check icon-thin me-2"></i>Patient Appointments</h5>
                 </div>
@@ -81,16 +81,13 @@
                                     @if($app->status == 'Pending')
                                         <form action="{{ route('doctor.appointment.confirm', $app->id) }}" method="POST" class="d-inline">
                                             @csrf
-                                            <button type="submit" class="btn btn-sm btn-success" title="Confirm Appointment">
-                                                <i class="bi bi-check-lg"></i>
+                                            <button type="submit" class="btn btn-sm btn-success shadow-sm" title="Confirm Appointment">
+                                                <i class="bi bi-check-lg"></i> Confirm
                                             </button>
                                         </form>
-                                        <form action="{{ route('doctor.appointment.cancel', $app->id) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel this appointment?')" title="Cancel Appointment">
-                                                <i class="bi bi-x-lg"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button" class="btn btn-sm btn-danger shadow-sm" data-bs-toggle="modal" data-bs-target="#cancelModal{{ $app->id }}" title="Cancel Appointment">
+                                            <i class="bi bi-x-lg"></i> Cancel
+                                        </button>
                                     @else
                                         <span class="text-muted small">No actions</span>
                                     @endif
@@ -104,7 +101,7 @@
                 </div>
             </div>
 
-            <div class="card shadow-sm border-0">
+            <div class="card shadow-sm border-0 hover-pop transition">
                 <div class="card-header bg-white py-3 border-bottom">
                     <h5 class="text-primary-dark mb-0 fw-bold"><i class="bi bi-card-list icon-thin me-2"></i>Your Posted Schedules</h5>
                 </div>
@@ -123,16 +120,12 @@
                             @foreach($schedules as $s)
                             @php
                                 $timeStartRaw = trim(explode('-', $s->time_slot)[0]);
-                                
-                                // Xử lý lỗi nếu giờ là hệ 24h (>=13) nhưng lại thừa chữ AM/PM
                                 if (preg_match('/(AM|PM)/i', $timeStartRaw) && (int)substr($timeStartRaw, 0, 2) >= 13) {
                                     $timeStartRaw = trim(str_ireplace(['AM', 'PM'], '', $timeStartRaw));
                                 }
-                                
                                 try {
                                     $isExpired = \Carbon\Carbon::parse($s->date . ' ' . $timeStartRaw, 'Asia/Ho_Chi_Minh')->isPast();
                                 } catch (\Exception $e) {
-                                    // Bỏ qua lỗi parse nếu định dạng quá dị
                                     $isExpired = false;
                                 }
                             @endphp
@@ -151,50 +144,17 @@
                                 </td>
                                 <td class="text-end pe-4">
                                     @if(!$s->is_booked && !$isExpired)
-                                        <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editScheduleModal{{ $s->id }}">
+                                        <button type="button" class="btn btn-sm btn-outline-primary me-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#editScheduleModal{{ $s->id }}">
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                         
                                         <form action="{{ route('doctor.schedule.destroy', $s->id) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this schedule?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm" onclick="return confirm('Delete this schedule?')">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
-
-                                        <div class="modal fade text-start" id="editScheduleModal{{ $s->id }}" tabindex="-1" aria-hidden="true">
-                                            <div class="modal-dialog">
-                                                <div class="modal-content">
-                                                    <form action="{{ route('doctor.schedule.update', $s->id) }}" method="POST">
-                                                        @csrf
-                                                        @method('PUT')
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title">Edit Schedule</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <div class="mb-3">
-                                                                <label class="form-label small fw-bold">Date <span class="text-danger">*</span></label>
-                                                                <input type="date" name="date" class="form-control" value="{{ $s->date }}" required>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <label class="form-label small fw-bold">Time Slot <span class="text-danger">*</span></label>
-                                                                <input type="text" name="time_slot" class="form-control" value="{{ $s->time_slot }}" required>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <label class="form-label small fw-bold">Price (VND) <span class="text-danger">*</span></label>
-                                                                <input type="number" name="price" class="form-control" value="{{ $s->price }}" min="0" required>
-                                                            </div>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
                                     @else
                                         <span class="text-muted small">Locked</span>
                                     @endif
@@ -208,4 +168,82 @@
         </div>
     </div>
 </div>
+
+@foreach($appointments as $app)
+    @if($app->status == 'Pending')
+        <div class="modal fade text-start" id="cancelModal{{ $app->id }}" tabindex="-1" aria-labelledby="cancelModalLabel{{ $app->id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content border-0 shadow">
+                    <form action="{{ route('doctor.appointment.cancel', $app->id) }}" method="POST">
+                        @csrf
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title" id="cancelModalLabel{{ $app->id }}">Cancel Appointment</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to cancel the appointment with <strong>{{ $app->patient->name }}</strong>?</p>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Reason for Cancellation <span class="text-danger">*</span></label>
+                                <textarea name="cancel_reason" class="form-control" rows="3" placeholder="Explain why you are cancelling this appointment..." required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-danger px-4">Confirm Cancellation</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+@endforeach
+
+@foreach($schedules as $s)
+    @php
+        $timeStartRaw = trim(explode('-', $s->time_slot)[0]);
+        if (preg_match('/(AM|PM)/i', $timeStartRaw) && (int)substr($timeStartRaw, 0, 2) >= 13) {
+            $timeStartRaw = trim(str_ireplace(['AM', 'PM'], '', $timeStartRaw));
+        }
+        try {
+            $isExpired = \Carbon\Carbon::parse($s->date . ' ' . $timeStartRaw, 'Asia/Ho_Chi_Minh')->isPast();
+        } catch (\Exception $e) {
+            $isExpired = false;
+        }
+    @endphp
+    @if(!$s->is_booked && !$isExpired)
+        <div class="modal fade text-start" id="editScheduleModal{{ $s->id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content border-0 shadow">
+                    <form action="{{ route('doctor.schedule.update', $s->id) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">Edit Schedule</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Date <span class="text-danger">*</span></label>
+                                <input type="date" name="date" class="form-control" value="{{ $s->date }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Time Slot <span class="text-danger">*</span></label>
+                                <input type="text" name="time_slot" class="form-control" value="{{ $s->time_slot }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Price (VND) <span class="text-danger">*</span></label>
+                                <input type="number" name="price" class="form-control" value="{{ $s->price }}" min="0" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+@endforeach
+
 @endsection

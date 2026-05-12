@@ -6,7 +6,7 @@
     @if(session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
     @if(session('error')) <div class="alert alert-danger">{{ session('error') }}</div> @endif
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm hover-pop transition">
         <div class="card-body p-0 table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
@@ -25,18 +25,27 @@
                         <td>{{ $app->doctor->hospital_name }}</td>
                         <td>{{ \Carbon\Carbon::parse($app->schedule->date)->format('M d, Y') }} ({{ $app->schedule->time_slot }})</td>
                         <td>
-                            @if($app->status == 'Confirmed') <span class="badge bg-success">Confirmed</span>
-                            @elseif($app->status == 'Cancelled') <span class="badge bg-danger">Cancelled</span>
-                            @else <span class="badge bg-warning text-dark">{{ $app->status }}</span> @endif
+                            @if($app->status == 'Confirmed') 
+                                <span class="badge bg-success">Confirmed</span>
+                            @elseif($app->status == 'Cancelled') 
+                                <span class="badge bg-danger">Cancelled</span>
+                                @if($app->cancel_reason)
+                                    <div class="mt-1 small text-muted fst-italic">
+                                        <i class="bi bi-info-circle me-1"></i>Reason: {{ $app->cancel_reason }}
+                                    </div>
+                                @endif
+                            @else 
+                                <span class="badge bg-warning text-dark">{{ $app->status }}</span> 
+                            @endif
                         </td>
                         <td>
                             @if($app->status != 'Cancelled')
                             <form action="{{ route('patient.cancel', $app->id) }}" method="POST">
                                 @csrf
-                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to cancel this appointment?')">Cancel Booking</button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm" onclick="return confirm('Are you sure you want to cancel this appointment?')">Cancel Booking</button>
                             </form>
                             @else
-                                <button class="btn btn-sm btn-secondary" disabled>Cancelled</button>
+                                <button class="btn btn-sm btn-secondary shadow-sm" disabled>Cancelled</button>
                             @endif
                         </td>
                     </tr>

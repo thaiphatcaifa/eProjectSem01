@@ -63,11 +63,10 @@
                     'X-Requested-With': 'XMLHttpRequest' // Khai báo đây là request AJAX
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                if(data.html !== undefined) {
-                    doctorsContainer.innerHTML = data.html;
-                }
+            .then(response => response.text()) // FIX LỖI: Đổi từ json() sang text() vì backend đang trả về chuỗi HTML
+            .then(html => {
+                // FIX LỖI: Gán trực tiếp chuỗi HTML nhận được vào giao diện
+                doctorsContainer.innerHTML = html;
             })
             .catch(error => console.error('Error fetching doctors:', error));
         }
